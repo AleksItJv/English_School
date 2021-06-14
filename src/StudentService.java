@@ -1,11 +1,14 @@
+import entity.Student;
+
 import java.util.List;
 
 public interface StudentService {
-    Students saveStudent(int idGroupSt, String fname, String sname, String lname, String phone);
-    Students getStudent(int idStudent);
+    Student saveStudent(Student student);
+    Student getStudent(int idStudent);
     int getStudentID(String firstName, String lastName);
-    List<Students> getAllStudents();
-    Students updateStudent(int idStudent, int idGroupSt);
-    Students deleteStudentByID(int idStudent);
+    List<Student> getAllStudents();
+    List<Student> getAllStudentsByGroupSt(int idGroupSt);
+    Student updateStudent(int idStudent, int idGroupSt);
+    Student deleteStudentByID(int idStudent);
 
 }

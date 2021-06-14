@@ -1,33 +1,29 @@
+import connection.Connector;
+import entity.SqlRequests;
+import entity.Student;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EnglishSchoolDB implements StudentService {
 
-    public static final String URL = "jdbc:mysql://localhost:3306/englishschool";
-    public static final String LOGIN = "root";
-    public static final String PASSWORD = "123456";
-
     @Override
-    public Students saveStudent(int idGroupSt, String fname, String sname, String lname, String phone) {
+    public Student saveStudent(Student student) {
         registrationDriver();
-        Connection connection = null;
+        Connection connection = Connector.getConnection();
         PreparedStatement preparedStatement = null;
-        Students student = null;
 
         try {
-            connection = DriverManager.getConnection(URL, LOGIN, PASSWORD);
+
             preparedStatement = connection.prepareStatement(SqlRequests.INSERT_STUDENT);
 
-            preparedStatement.setInt(1, idGroupSt);
-            preparedStatement.setString(2, fname);
-            preparedStatement.setString(3, sname);
-            preparedStatement.setString(4, lname);
-            preparedStatement.setString(5, phone);
+            preparedStatement.setInt(1, student.getIdGroup());
+            preparedStatement.setString(2, student.getFname());
+            preparedStatement.setString(3, student.getSname());
+            preparedStatement.setString(4, student.getLname());
+            preparedStatement.setString(5, student.getPhone());
             preparedStatement.execute();
-
-            int idSudent = getStudentID(fname, lname);
-            student = new Students(idSudent, idGroupSt, fname, sname, lname, phone);
 
         } catch (SQLException throwables) {
             throwables.printStackTrace();
@@ -38,14 +34,13 @@ public class EnglishSchoolDB implements StudentService {
     }
 
     @Override
-    public Students deleteStudentByID(int idStudent) {
-        Students student = getStudent(idStudent);
+    public Student deleteStudentByID(int idStudent) {
+        Student student = getStudent(idStudent);
         registrationDriver();
-        Connection connection = null;
+        Connection connection = Connector.getConnection();
         PreparedStatement preparedStatement = null;
 
         try {
-            connection = DriverManager.getConnection(URL, LOGIN, PASSWORD);
             preparedStatement = connection.prepareStatement(SqlRequests.DELETE_STUDENT);
             preparedStatement.setInt(1, idStudent);
             int res = preparedStatement.executeUpdate();
@@ -59,15 +54,14 @@ public class EnglishSchoolDB implements StudentService {
     }
 
     @Override
-    public Students updateStudent(int idStudent, int idGroupSt) {
+    public Student updateStudent(int idStudent, int idGroupSt) {
 
-        Students student = getStudent(idStudent);
+        Student student = getStudent(idStudent);
         registrationDriver();
-        Connection connection = null;
+        Connection connection = Connector.getConnection();
         PreparedStatement preparedStatement = null;
 
         try {
-            connection = DriverManager.getConnection(URL, LOGIN, PASSWORD);
             preparedStatement = connection.prepareStatement(SqlRequests.UPDATE_STUDENT);
             preparedStatement.setInt(2, idStudent);
             preparedStatement.setInt(1, idGroupSt);
@@ -82,18 +76,15 @@ public class EnglishSchoolDB implements StudentService {
     }
 
     @Override
-    public List<Students> getAllStudents() {
+    public List<Student> getAllStudents() {
         registrationDriver();
-        Connection connection = null;
+        Connection connection = Connector.getConnection();
         PreparedStatement preparedStatement = null;
-        List<Students> allStudents = new ArrayList<>();
+        List<Student> allStudents = new ArrayList<>();
 
         try {
-            connection = DriverManager.getConnection(URL, LOGIN, PASSWORD);
             preparedStatement = connection.prepareStatement(SqlRequests.GET_ALL_STUDENTS);
-
             ResultSet rs = preparedStatement.executeQuery();
-
             while (rs.next()) {
                 int idStudent = rs.getInt(1);
                 int idGroupSt = rs.getInt(2);
@@ -101,7 +92,39 @@ public class EnglishSchoolDB implements StudentService {
                 String sname = rs.getString(4);
                 String lname = rs.getString(5);
                 String phone = rs.getString(6);
-                Students student = new Students(idStudent, idGroupSt, fname, sname, lname, phone);
+                Student student = new Student(idStudent, idGroupSt, fname, sname, lname, phone);
+                allStudents.add(student);
+            }
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        } finally {
+            closeConnections(connection, preparedStatement);
+        }
+
+        return allStudents;
+    }
+
+    @Override
+    public List<Student> getAllStudentsByGroupSt(int idGroupSt) {
+        registrationDriver();
+        Connection connection = Connector.getConnection();
+        PreparedStatement preparedStatement = null;
+        List<Student> allStudents = new ArrayList<>();
+
+        try {
+            preparedStatement = connection.prepareStatement(SqlRequests.GET_ALL_STUDENTS_BY_GROUPST);
+            preparedStatement.setInt(1, idGroupSt);
+            preparedStatement.execute();
+
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                int idStudent = rs.getInt(1);
+                String fname = rs.getString(3);
+                String sname = rs.getString(4);
+                String lname = rs.getString(5);
+                String phone = rs.getString(6);
+                Student student = new Student(idStudent, idGroupSt, fname, sname, lname, phone);
                 allStudents.add(student);
             }
 
@@ -117,12 +140,11 @@ public class EnglishSchoolDB implements StudentService {
     @Override
     public int getStudentID(String firstName, String lastName) {
         registrationDriver();
-        Connection connection = null;
+        Connection connection = Connector.getConnection();
         PreparedStatement preparedStatement = null;
         int stID = 0;
 
         try {
-            connection = DriverManager.getConnection(URL, LOGIN, PASSWORD);
             preparedStatement = connection.prepareStatement(SqlRequests.STUDENT_ID);
 
             preparedStatement.setString(1, firstName);
@@ -143,15 +165,14 @@ public class EnglishSchoolDB implements StudentService {
     }
 
     @Override
-    public Students getStudent(int idStudent) {
-        Students student = null;
+    public Student getStudent(int idStudent) {
+        Student student = null;
         registrationDriver();
-        Connection connection = null;
+        Connection connection = Connector.getConnection();
         PreparedStatement preparedStatement = null;
 
 
         try {
-            connection = DriverManager.getConnection(URL, LOGIN, PASSWORD);
             preparedStatement = connection.prepareStatement(SqlRequests.GET_STUDENT_BY_ID);
 
             preparedStatement.setInt(1, idStudent);
@@ -164,7 +185,7 @@ public class EnglishSchoolDB implements StudentService {
                 String sname = rs.getString(4);
                 String lname = rs.getString(5);
                 String phone = rs.getString(6);
-                student = new Students(idStudent, idGroupSt, fname, sname, lname, phone);
+                student = new Student(idStudent, idGroupSt, fname, sname, lname, phone);
             }
 
         } catch (SQLException throwables) {
